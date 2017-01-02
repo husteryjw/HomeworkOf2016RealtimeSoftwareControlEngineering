@@ -1,0 +1,207 @@
+#include <iostream>
+
+#include <string>
+
+using namespace std;
+
+ 
+
+ 
+
+string state;
+
+bool car_in,car_out;  //出入闸信号
+
+bool gan_up,gan_down;  //杆上下传感器信号
+
+bool light_red,light_green;  //红绿灯控制信号
+
+bool motion_up,motion_down;  //杆上下动作控制信号
+
+ 
+
+void change_state()   //状态迁移函数
+
+{
+
+    if (state=="down")
+
+    {
+
+        if (car_in == true) state = "down2up";
+
+        else state = "down";
+
+    }
+
+    else if (state == "down2up")
+
+    {
+
+        if (gan_up == true) state = "up";
+
+        else state = "down2up";
+
+    }
+
+    else if (state == "up")
+
+    {
+
+        if (car_out == true) state = "up2down";
+
+        else state = "up";
+
+    }
+
+    else if (state == "up2down")
+
+    {
+
+        if (gan_down == true) state = "down";
+
+        else state = "up2down";
+
+    }
+
+}
+
+ 
+
+void action()    //状态动作函数
+
+{
+
+    if (state == "down")
+
+    {
+
+        light_red = true;
+
+        light_green = false;
+
+        motion_up = false;
+
+        motion_down = false;
+
+    }
+
+    else if (state == "down2up")
+
+    {
+
+        light_red = true;
+
+        light_green = false;
+
+        motion_up = true;
+
+        motion_down = false;
+
+    }
+
+    else if (state == "up")
+
+    {
+
+        light_red = false;
+
+        light_green = true;
+
+        motion_up = false;
+
+        motion_down = false;
+
+    }
+
+    else if (state == "up2down")
+
+    {
+
+        light_red = false;
+
+        light_green = true;
+
+        motion_up = false;
+
+        motion_down = true;
+
+    }
+
+}
+
+ 
+
+void ncr()       //复位函数
+
+{
+
+    car_in = false;
+
+    car_out = false;
+
+    gan_down = false;
+
+    gan_up = false;
+
+}
+
+ 
+
+void read(string m)      //测试信号函数
+
+{
+
+    if (m=="1y") car_in = true;          //汽车入闸传感器为true
+
+    else if (m == "1n") car_in = false;  //汽车入闸传感器为false
+
+    else if (m == "2y") car_out = true;  //汽车出闸传感器为true
+
+    else if (m == "2n") car_out = false;  //汽车出闸传感器为false
+
+    else if (m == "3y") gan_up = true;   //杆上方传感器为true
+
+    else if (m == "3n") gan_up = false;  //杆上方传感器为false
+
+    else if (m == "4y") gan_down = true; //杆下方传感器为true
+
+    else if (m == "4n") gan_down = false; //杆下方传感器为false
+
+}
+
+ 
+
+void main()    //主函数
+
+{
+
+    state = "down";    //默认杆放下
+
+    string sensor;
+
+    cout << "wait for car coming in..." << endl;
+
+    cout << "current state is      " << "down" << endl;
+
+    while (1) {    
+
+        action();
+
+        ncr();
+
+        cout << "please input the signal" << endl;
+
+        cin >> sensor;
+
+        read(sensor);
+
+        change_state();
+
+        cout << "current state is      " << state << endl;
+
+ 
+
+    }
+
+}

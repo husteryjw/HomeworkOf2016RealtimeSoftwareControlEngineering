@@ -1,0 +1,215 @@
+module carlight(
+
+  car_in      ,  //入闸传感器信号
+
+  car_out     ,  //出闸传感器信号
+
+  gan_up      ,  //起落杆上方传感器信号
+
+  gan_down    ,  //起落杆下方传感器信号
+
+  motion_up   ,  //起落杆电机上升控制信号
+
+  motion_down ,  //起落杆电机下降控制信号
+
+  light_red   ,  //红灯信号
+
+  light_green ,  //绿灯信号
+
+  clk         ,  //时钟信号
+
+  ncr         ); //复位信号
+
+//输入信号
+
+input clk , ncr         ;
+
+input car_in , car_out  ;
+
+input gan_up , gan_down ;
+
+//输出信号
+
+output motion_up , motion_down ;
+
+output light_red , light_green ;
+
+//寄存器
+
+reg [1:0] state , next_state ;
+
+reg motion_up , motion_down  ;
+
+reg light_red , light_green  ;
+
+//状态机四种状态
+
+parameter [1:0] down    = 2'b00 ,  //杆处于下方状态
+
+                down2up = 2'b01 ,  //杆处于上升状态
+
+                up      = 2'b11 ,  //杆处于上方状态
+
+                up2down = 2'b10 ;  //杆处于下降状态
+
+ 
+
+always@(posedge clk or negedge ncr) begin
+
+if(~ncr)
+
+  state <= down ;
+
+else
+
+  state <= next_state ;         //状态转移
+
+end
+
+ 
+
+always@(*) begin
+
+case(state)
+
+  down: begin                   //down状态时，有car_in信号，转换到down2up状态，否则，状态不变
+
+    if(car_in==1)
+
+      next_state = down2up ;
+
+    else
+
+      next_state = down ;
+
+  end
+
+  down2up: begin                //down2up状态时，有gan_up信号，转换到up状态，否则，状态不变
+
+    if(gan_up==1)
+
+      next_state = up ;
+
+    else
+
+      next_state = down2up ;
+
+  end
+
+  up: begin                     //up状态时，有car_out信号，转换到up2down状态，否则，状态不变
+
+    if(car_out==1)
+
+      next_state = up2down ;
+
+    else
+
+      next_state = up ;
+
+  end
+
+  up2down: begin                //up2down状态时，有gan_down信号，转换到down状态，否则，状态不变
+
+    if(gan_down==1)
+
+      next_state = down ;
+
+    else
+
+      next_state = up2down ;
+
+  end
+
+  default: next_state = down ;
+
+endcase
+
+end
+
+ 
+
+always@(posedge clk or negedge ncr) begin
+
+if(~ncr) begin
+
+    motion_up   = 0 ;
+
+    motion_down = 0 ;
+
+    light_red   = 1 ;
+
+    light_green = 0 ;
+
+end
+
+else begin
+
+  case(state)
+
+    down: begin                //down状态时对应的输出
+
+      motion_up   = 0 ;
+
+      motion_down = 0 ;
+
+      light_red   = 1 ;
+
+      light_green = 0 ;
+
+    end
+
+    down2up: begin             //down2up状态时对应的输出
+
+      motion_up   = 1 ;
+
+      motion_down = 0 ;
+
+      light_red   = 1 ;
+
+      light_green = 0 ;
+
+    end
+
+    up: begin                  //up状态时对应的输出
+
+      motion_up   = 0 ;
+
+      motion_down = 0 ;
+
+      light_red   = 0 ;
+
+      light_green = 1 ;
+
+    end
+
+    up2down: begin             //up2down状态时对应的输出
+
+      motion_up   = 0 ;
+
+      motion_down = 1 ;
+
+      light_red   = 0 ;
+
+      light_green = 1 ;
+
+    end
+
+    default: begin
+
+      motion_up   = 0 ;
+
+      motion_down = 0 ;
+
+      light_red   = 1 ;
+
+      light_green = 0 ;
+
+    end
+
+  endcase
+
+end
+
+end
+
+endmodule
